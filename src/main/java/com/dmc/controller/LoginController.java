@@ -1,8 +1,15 @@
 package com.dmc.controller;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.tomcat.util.http.fileupload.FileUpload;
+import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -41,6 +48,35 @@ public class LoginController {
 		} else {
 			System.out.println("File empty");
 			return "You failed to upload because the file was empty.";
+		}
+	}
+
+	@RequestMapping(value = "/img")
+	public void getImageSource(@RequestParam("filename") String filename, HttpServletResponse response)
+			throws IOException {
+		OutputStream os = response.getOutputStream();
+		try {
+			File file = new File(UPLOAD_DIR + "/" + filename);
+			if (!file.exists()) {
+				response.setStatus(404);
+				return;
+			}
+			String type = filename.substring(filename.lastIndexOf(".") + 1, filename.length());
+			response.setHeader("Content-Disposition", "attachment; filename=" + filename);
+			response.setContentType("image/" + type + "; charset=utf-8");
+			FileInputStream fileInputStream = new FileInputStream(file);
+			byte[] bytes = new byte[fileInputStream.available()];
+			fileInputStream.read(bytes);
+			fileInputStream.close();
+			os.write(bytes);
+			os.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (os != null) {
+				os.close();
+			}
+
 		}
 	}
 
