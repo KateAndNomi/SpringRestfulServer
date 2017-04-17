@@ -7,6 +7,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.context.support.FileSystemXmlApplicationContext;
 
 import com.dmc.database.JdbcDaoImp;
 
@@ -14,7 +15,9 @@ import com.dmc.database.JdbcDaoImp;
 public class Application {
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
-		ApplicationContext context = new ClassPathXmlApplicationContext("com/dmc/controller/JdbcConfig.xml");
+//		ApplicationContext context = new ClassPathXmlApplicationContext("com/dmc/controller/JdbcConfig.xml");
+		System.out.println(System.getProperty("user.dir"));
+		ApplicationContext context = new FileSystemXmlApplicationContext("src/main/xml/JdbcConfig.xml");
 		JdbcDaoImp daoImp = (JdbcDaoImp) context.getBean("jdbcDaoImp");
 		System.out.println("MAXX数据库配置完成,开始测试打印------->");
 		List<Map<String, Object>> results = daoImp.getAllUsers();
