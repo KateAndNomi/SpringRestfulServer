@@ -3,7 +3,7 @@ package com.dmc.bean;
 import java.util.ArrayList;
 
 public class ReimbInfo {
-	private String title = "", desc = "", amount = "", costTime = "", type = "";
+	private String title = "", desc = "", amount = "", costTime = "", type = "",user="";
 	private ArrayList<String> imgs = new ArrayList<>();
 
 	public String getTitle() {
@@ -52,6 +52,15 @@ public class ReimbInfo {
 
 	public void setImgs(ArrayList<String> imgs) {
 		this.imgs = imgs;
+	}
+	
+
+	public String getUser() {
+		return user;
+	}
+
+	public void setUser(String user) {
+		this.user = user;
 	}
 
 	@Override
