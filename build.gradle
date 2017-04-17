@@ -45,7 +45,11 @@ dependencies {
     // Use JUnit test framework
     testImplementation 'junit:junit:4.12'
     
+    // maxx added.
     compile 'com.alibaba:fastjson:1.2.28'
+    compile("org.springframework:spring-jdbc")
+	compile("com.h2database:h2")
+	compile files('lib/mysql-connector-java-5.1.18-bin.jar')
     
     // maxx:spring-->
     compile("org.springframework.boot:spring-boot-starter-web")
