@@ -9,7 +9,7 @@ import java.util.ArrayList;
  *
  */
 public class ReimbInfoQuery {
-	private String id = "", title = "", desc = "", amount = "", costTime = "", type = "", state = "", time = "";
+	private String id = "", title = "", desc = "", amount = "", costTime = "", type = "", state = "", time = "",reimb_id="";
 	private ArrayList<String> imgs = new ArrayList<>();
 
 	public String getId() {
@@ -84,12 +84,22 @@ public class ReimbInfoQuery {
 		this.imgs = imgs;
 	}
 
+	public String getReimb_id() {
+		return reimb_id;
+	}
+
+	public void setReimb_id(String reimb_id) {
+		this.reimb_id = reimb_id;
+	}
+
 	@Override
 	public String toString() {
 		return "ReimbInfoQuery [id=" + id + ", title=" + title + ", desc=" + desc + ", amount=" + amount + ", costTime="
-				+ costTime + ", type=" + type + ", state=" + state + ", time=" + time + ", imgs=" + imgs + "]";
+				+ costTime + ", type=" + type + ", state=" + state + ", time=" + time + ", reimb_id=" + reimb_id
+				+ ", imgs=" + imgs + "]";
 	}
 
+	
 	
 
 }

@@ -17,6 +17,7 @@ public class JdbcDaoImp {
 	private DataSource datasource;
 	private JdbcTemplate jdbcTemplateObject;
 	private SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	private SimpleDateFormat sf2 = new SimpleDateFormat("yyyyMMddHHmmss");
 
 	public void setdatasource(DataSource ds) {
 		this.datasource = ds;
@@ -35,11 +36,11 @@ public class JdbcDaoImp {
 	 * @param info
 	 * @return
 	 */
-	public boolean insertReimbInfo(ReimbInfo info) {
-		String sql = "INSERT INTO REIMBURSE (name,description,amount,user,apply_time,time,type) values (?,?,?,?,?,?,?)";
+	public boolean insertReimbInfo(ReimbInfo info, String generateID) {
+		String sql = "INSERT INTO REIMBURSE (name,description,amount,user,apply_time,time,type,reimb_id) values (?,?,?,?,?,?,?,?)";
 		int count = jdbcTemplateObject.update(sql,
 				new Object[] { info.getTitle(), info.getDesc(), Double.valueOf(info.getAmount()), info.getUser(),
-						sf.format(new Date()), info.getCostTime(), info.getType() });
+						sf.format(new Date()), info.getCostTime(), info.getType(),generateID });
 		return count == 1 ? true : false;
 	}
 
@@ -122,6 +123,20 @@ public class JdbcDaoImp {
 		sb.deleteCharAt(sb.lastIndexOf(","));
 		sb.append(")");
 		return sb.toString();
+	}
+
+	/**
+	 * 注册资源
+	 * 
+	 * @param name
+	 *            资源名称
+	 * @param path
+	 *            资源路径
+	 * @return count
+	 */
+	public int registerResource(String name, String path, String type, String obj_id) {
+		String sql = "INSERT INTO RESOURCE (name,path,type,obj_id) VALUES (?,?,?,?)";
+		return jdbcTemplateObject.update(sql, new Object[] { name, path, type, obj_id });
 	}
 
 }
