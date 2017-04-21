@@ -3,13 +3,18 @@ package com.dmc.database;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.sql.DataSource;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
 
+import com.alibaba.fastjson.JSON;
+import com.dmc.bean.Order;
+import com.dmc.bean.OrderItem;
 import com.dmc.bean.ReimbInfo;
 import com.dmc.bean.ReimbInfoQuery;
 
@@ -38,9 +43,11 @@ public class JdbcDaoImp {
 	 */
 	public boolean insertReimbInfo(ReimbInfo info, String generateID) {
 		String sql = "INSERT INTO REIMBURSE (name,description,amount,user,apply_time,time,type,reimb_id) values (?,?,?,?,?,?,?,?)";
-		int count = jdbcTemplateObject.update(sql,
-				new Object[] { info.getTitle(), info.getDesc(), Double.valueOf(info.getAmount()), info.getUser(),
-						sf.format(new Date()), info.getCostTime(), info.getType(),generateID });
+		int count = jdbcTemplateObject
+				.update(sql,
+						new Object[] { info.getTitle(), info.getDesc(), Double.valueOf(info.getAmount()),
+								info.getUser(), sf.format(new Date()), info.getCostTime(), info.getType(),
+								generateID });
 		return count == 1 ? true : false;
 	}
 
@@ -126,6 +133,23 @@ public class JdbcDaoImp {
 	}
 
 	/**
+	 * 转换null为""
+	 * 
+	 * @param l
+	 * @return
+	 */
+	private List<Map<String, Object>> null2Empty(List<Map<String, Object>> l) {
+		for (Map<String, Object> map : l) {
+			for (String s : map.keySet()) {
+				if (map.get(s) == null) {
+					map.put(s, "");
+				}
+			}
+		}
+		return l;
+	}
+
+	/**
 	 * 注册资源
 	 * 
 	 * @param name
@@ -137,6 +161,113 @@ public class JdbcDaoImp {
 	public int registerResource(String name, String path, String type, String obj_id) {
 		String sql = "INSERT INTO RESOURCE (name,path,type,obj_id) VALUES (?,?,?,?)";
 		return jdbcTemplateObject.update(sql, new Object[] { name, path, type, obj_id });
+	}
+
+	/**
+	 * 根据关键字,排序模式(状态/时间),页码来查询订单数据
+	 * 
+	 * @param page
+	 * @param mode
+	 * @param keyword
+	 * @return
+	 */
+	public List<Order> queryOrdersByPage(int page, int mode, String keyword) {
+		List<Order> results = new ArrayList<>();
+		// 1.查询该分页中符合关键字要求的order_id...因为mysql不支持limit的子句查询,要拆分
+		StringBuffer sql = new StringBuffer();
+		sql.append("SELECT DISTINCT O.order_id FROM `ORDER` O");
+		sql.append(" LEFT JOIN COOPERATION C ON C.c_id = O.id");
+		sql.append(" LEFT JOIN ORDER_ITEM I ON O.order_id = I.i_order_id");
+		sql.append(" LEFT JOIN METERIAL M ON I.i_meterial_id = M.m_id");
+		// keyword
+		if (keyword != null && !keyword.equals("")) {
+			sql.append(" WHERE O.description LIKE '%").append(keyword).append("%'");
+			sql.append(" OR O.order_id LIKE '%").append(keyword).append("%'");
+			sql.append(" OR C.`c_name` LIKE '%").append(keyword).append("%'");
+			sql.append(" OR M.`m_name` LIKE '%").append(keyword).append("%'");
+		}
+		// sort mode
+		switch (mode) {
+		case 1:
+		default:
+			sql.append(" ORDER BY O.build_time DESC");
+			break;
+		case 2:
+			sql.append(" ORDER BY O.state,O.build_time DESC");
+		}
+		sql.append(" LIMIT ?,20");
+		System.out.println(sql.toString());
+		List<Map<String, Object>> ids_q = jdbcTemplateObject.queryForList(sql.toString(), new Object[] { page });
+		List<String> ids = new ArrayList<>();
+		for (Map<String, Object> map : ids_q) {
+			ids.add((String) map.get("order_id"));
+		}
+		System.out.println(ids.toString());
+
+		// 2.根据查询详细数据
+		StringBuffer sql2 = new StringBuffer();
+		sql2.append("SELECT * FROM `ORDER` O");
+		sql2.append(" LEFT JOIN COOPERATION C ON C.c_id = O.id");
+		sql2.append(" LEFT JOIN ORDER_ITEM I ON O.order_id = I.i_order_id");
+		sql2.append(" LEFT JOIN METERIAL M ON I.i_meterial_id = M.m_id");
+		sql2.append(" WHERE O.order_id in ").append(inClause(ids));
+		switch (mode) {
+		case 1:
+		default:
+			sql2.append(" ORDER BY O.build_time DESC");
+			break;
+		case 2:
+			sql2.append(" ORDER BY O.state,O.build_time DESC");
+		}
+		System.out.println(sql2.toString());
+		List<Map<String, Object>> results_q = jdbcTemplateObject.queryForList(sql2.toString());
+		results_q = null2Empty(results_q);
+		System.out.println("查出来的数据:" + results_q.size());
+
+		// 3.分析数据生成Bean
+		System.out.println(results_q.toString());
+		Map<String, Order> orderMap = new LinkedHashMap<>();
+		for (Map<String, Object> map : results_q) {
+			String oid = (String) map.get("order_id");
+			System.out.println(oid + ":" + map.get("build_time").toString());
+			Order order = null;
+			if (!orderMap.containsKey(oid)) {
+				// 新的Order
+				orderMap.put(oid, new Order());
+				order = orderMap.get(oid);
+
+				// 新增信息
+				order.setArrived_time(map.get("arrived_time").toString());
+				order.setBuild_time(map.get("build_time").toString());
+				order.setCooperation(map.get("c_name").toString());
+				order.setCooperation_id(map.get("cooperation").toString());
+				order.setDescription(map.get("description").toString());
+				order.setOrder_id(oid);
+				order.setReceiver(map.get("receiver").toString());
+				order.setReceiver_phone(map.get("receiver_phone").toString());
+				order.setState(map.get("state").toString());
+				order.setTotal(map.get("total").toString());
+			} else {
+				order = orderMap.get(oid);
+			}
+			// 新增item
+			OrderItem item = new OrderItem();
+			item.setCount_type(map.get("i_count_type").toString());
+			item.setDescription(map.get("i_description").toString());
+			item.setMeterial(map.get("m_name").toString());
+			item.setMeterial_id(map.get("i_meterial_id").toString());
+			item.setNumber(map.get("i_number").toString());
+			item.setOrder_id(map.get("i_order_id").toString());
+			item.setPattern_res(map.get("i_pattern_res").toString());
+			item.setSize(map.get("i_size").toString());
+			item.setTotal_price(map.get("i_total_prize").toString());
+			item.setUnit_price(map.get("i_unit_prize").toString());
+			order.getItems().add(item);
+		}
+		for (String oid : orderMap.keySet()) {
+			results.add(orderMap.get(oid));
+		}
+		return results;
 	}
 
 }

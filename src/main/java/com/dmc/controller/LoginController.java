@@ -26,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.alibaba.fastjson.JSON;
 import com.dmc.bean.JsonResponse;
 import com.dmc.bean.LoginMsg;
+import com.dmc.bean.Order;
 import com.dmc.bean.ReimbInfo;
 import com.dmc.bean.ReimbInfoQuery;
 import com.dmc.bean.Resource;
@@ -216,6 +217,14 @@ public class LoginController {
 		List<ReimbInfoQuery> results = dao.getReimInfo(Integer.valueOf(user), Integer.valueOf(mode),
 				Integer.valueOf(page));
 		String json = JSON.toJSONString(results);
+		return json;
+	}
+
+	@RequestMapping("/getOrders")
+	public String getOrders(@RequestParam(value = "page") String page, @RequestParam(value = "mode") String mode,
+			@RequestParam(value = "keyword") String keyword) {
+		List<Order> orders = dao.queryOrdersByPage(Integer.valueOf(page), Integer.valueOf(mode), keyword);
+		String json = JSON.toJSONString(orders);
 		return json;
 	}
 
