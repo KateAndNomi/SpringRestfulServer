@@ -122,6 +122,9 @@ public class JdbcDaoImp {
 	 * @return
 	 */
 	private String inClause(List<? extends Object> aa) {
+		if (aa.size() == 0) {
+			return "()";
+		}
 		StringBuffer sb = new StringBuffer();
 		sb.append("(");
 		for (Object a : aa) {
@@ -203,6 +206,10 @@ public class JdbcDaoImp {
 			ids.add((String) map.get("order_id"));
 		}
 		System.out.println(ids.toString());
+		// 如果查不出来东西.就返回
+		if (ids.size()==0) {
+			return results;
+		}
 
 		// 2.根据查询详细数据
 		StringBuffer sql2 = new StringBuffer();
@@ -229,7 +236,6 @@ public class JdbcDaoImp {
 		Map<String, Order> orderMap = new LinkedHashMap<>();
 		for (Map<String, Object> map : results_q) {
 			String oid = (String) map.get("order_id");
-			System.out.println(oid + ":" + map.get("build_time").toString());
 			Order order = null;
 			if (!orderMap.containsKey(oid)) {
 				// 新的Order
