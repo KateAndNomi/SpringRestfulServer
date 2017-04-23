@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.alibaba.fastjson.JSON;
+import com.dmc.bean.Cooperation;
 import com.dmc.bean.JsonResponse;
 import com.dmc.bean.LoginMsg;
 import com.dmc.bean.Order;
@@ -111,6 +112,7 @@ public class LoginController {
 		OutputStream os = response.getOutputStream();
 		try {
 			File file = new File(UPLOAD_DIR + "/" + filename);
+			System.out.println(file.getPath());
 			if (!file.exists()) {
 				response.setStatus(404);
 				return;
@@ -220,6 +222,17 @@ public class LoginController {
 		return json;
 	}
 
+	/**
+	 * 获取订单信息
+	 * 
+	 * @param page
+	 *            分页
+	 * @param mode
+	 *            排序模式
+	 * @param keyword
+	 *            关键字
+	 * @return
+	 */
 	@RequestMapping("/getOrders")
 	public String getOrders(@RequestParam(value = "page") String page, @RequestParam(value = "mode") String mode,
 			@RequestParam(value = "keyword") String keyword) {
@@ -230,6 +243,13 @@ public class LoginController {
 
 	private String getJsonResponse(int statusCode, String msg) {
 		return JSON.toJSONString(new JsonResponse(statusCode, msg));
+	}
+
+	@RequestMapping("/getCoos")
+	public String getCoos(@RequestParam(value = "mode") String mode, @RequestParam(value = "keyword") String keyword) {
+		List<Cooperation> coos = dao.queryCooperations(Integer.valueOf(mode), keyword);
+		String json = JSON.toJSONString(coos);
+		return json;
 	}
 
 }

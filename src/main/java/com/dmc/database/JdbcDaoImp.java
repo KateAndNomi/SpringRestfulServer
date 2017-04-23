@@ -1,5 +1,6 @@
 package com.dmc.database;
 
+import java.awt.event.InputMethodEvent;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -13,6 +14,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 
 import com.alibaba.fastjson.JSON;
+import com.dmc.bean.Cooperation;
 import com.dmc.bean.Order;
 import com.dmc.bean.OrderItem;
 import com.dmc.bean.ReimbInfo;
@@ -207,7 +209,7 @@ public class JdbcDaoImp {
 		}
 		System.out.println(ids.toString());
 		// 如果查不出来东西.就返回
-		if (ids.size()==0) {
+		if (ids.size() == 0) {
 			return results;
 		}
 
@@ -276,4 +278,40 @@ public class JdbcDaoImp {
 		return results;
 	}
 
+	public List<Cooperation> queryCooperations(int mode, String keyword) {
+		List<Cooperation> results = new ArrayList<>();
+		StringBuffer sql = new StringBuffer();
+		sql.append("SELECT * FROM COOPERATION C");
+		if (keyword != null && !keyword.equals("")) {
+			sql.append(" WHERE C.c_name LIKE '%").append(keyword).append("%'");
+		}
+		// sort mode
+		switch (mode) {
+		case 1:
+		default:
+			sql.append(" ORDER BY C.c_name");
+			break;
+		case 2:
+			// TODO 需求中另一种排序模式为:根据最近交易查询公司
+			sql.append(" ORDER BY C.c_name");
+			break;
+		}
+		System.out.println(sql.toString());
+		List<Map<String, Object>> coos_q = jdbcTemplateObject.queryForList(sql.toString());
+		if (coos_q.size() == 0) {
+			return results;
+		}
+		coos_q = null2Empty(coos_q);
+		for (Map<String, Object> map : coos_q) {
+			Cooperation cooperation = new Cooperation();
+			cooperation.setId(map.get("c_id").toString());
+			cooperation.setName(map.get("c_name").toString());
+			cooperation.setDesc(map.get("c_description").toString());
+			cooperation.setPhone(map.get("c_phone").toString());
+			cooperation.setContact_person(map.get("c_contact_person").toString());
+			cooperation.setAddress(map.get("c_address").toString());
+			results.add(cooperation);
+		}
+		return results;
+	}
 }
